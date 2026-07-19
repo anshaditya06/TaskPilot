@@ -1,8 +1,8 @@
-from flask import Flask, render_template, redirect, url_for, flash
+from flask import Flask, abort, render_template, redirect, url_for, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User
-from forms import RegisterForm, LoginForm
+from forms import RegisterForm, LoginForm, TaskForm
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'change-this-later'
@@ -58,10 +58,42 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
-@app.route('/tasks')
+from models import db, User, Task
+from forms import RegisterForm, LoginForm, TaskForm
+
+@app.route('/tasks', methods=['GET', 'POST'])
 @login_required
 def tasks():
-    return f'Logged in as {current_user.username} — tasks page coming next.'
+    form = TaskForm()
+    if form.validate_on_submit():
+        new_task = Task()
+        new_task.title = form.title.data or ''
+        new_task.user_id = current_user.id
+        db.session.add(new_task)
+        db.session.commit()
+        return redirect(url_for('tasks'))
+    user_tasks = Task.query.filter_by(user_id=current_user.id).order_by(Task.id.desc()).all()
+    return render_template('tasks.html', form=form, tasks=user_tasks)
+
+@app.route('/tasks/<int:task_id>/toggle')
+@login_required
+def toggle_task(task_id):
+    task = Task.query.get_or_404(task_id)
+    if task.owner != current_user:
+        abort(403)
+    task.done = not task.done
+    db.session.commit()
+    return redirect(url_for('tasks'))
+
+@app.route('/tasks/<int:task_id>/delete')
+@login_required
+def delete_task(task_id):
+    task = Task.query.get_or_404(task_id)
+    if task.owner != current_user:
+        abort(403)
+    db.session.delete(task)
+    db.session.commit()
+    return redirect(url_for('tasks'))
 
 if __name__ == '__main__':
     with app.app_context():

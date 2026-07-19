@@ -4,10 +4,15 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User
 from forms import RegisterForm, LoginForm, TaskForm
 from flask_migrate import Migrate
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'change-this-later'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///todo.db'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
 db.init_app(app)
 migrate = Migrate(app, db)
 

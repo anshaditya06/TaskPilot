@@ -1,5 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
+from datetime import date
 
 db = SQLAlchemy()
 
@@ -10,8 +11,14 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(200), nullable=False)
     tasks = db.relationship('Task', backref='owner', lazy=True)
 
+
+
 class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     done = db.Column(db.Boolean, default=False)
+    due_date = db.Column(db.Date, nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+
+

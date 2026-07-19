@@ -1,32 +1,43 @@
 {% extends 'base.html' %}
-
+{% block title %}My Tasks{% endblock %}
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <h2 class="mb-4">Your Tasks</h2>
+<h2 class="mb-4">My Tasks</h2>
 
-        <form method="post" class="card p-3 mb-4">
-            {{ form.hidden_tag() }}
-            <div class="mb-3">
-                {{ form.title.label(class="form-label") }}
-                {{ form.title(class="form-control") }}
-            </div>
-            {{ form.submit(class="btn btn-primary") }}
-        </form>
-
-        <ul class="list-group">
-            {% for task in tasks %}
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-                <span{% if task.done %} class="text-decoration-line-through text-muted"{% endif %}>{{ task.title }}</span>
-                <div>
-                    <a href="{{ url_for('toggle_task', task_id=task.id) }}" class="btn btn-sm btn-outline-secondary">{% if task.done %}Undo{% else %}Done{% endif %}</a>
-                    <a href="{{ url_for('delete_task', task_id=task.id) }}" class="btn btn-sm btn-outline-danger">Delete</a>
-                </div>
-            </li>
-            {% else %}
-            <li class="list-group-item text-muted">No tasks yet.</li>
-            {% endfor %}
-        </ul>
+<form method="POST" class="row g-2 mb-4">
+    {{ form.hidden_tag() }}
+    <div class="col">
+        {{ form.title(class="form-control", placeholder="What needs doing?") }}
+        {% for error in form.title.errors %}
+            <div class="text-danger small">{{ error }}</div>
+        {% endfor %}
     </div>
-</div>
+    <div class="col-auto">
+        {{ form.due_date(class="form-control") }}
+    </div>
+    <div class="col-auto">
+        {{ form.submit(class="btn btn-primary") }}
+    </div>
+</form>
+
+<ul class="list-group">
+    {% for task in tasks %}
+    <li class="list-group-item d-flex justify-content-between align-items-center {% if task.done %}list-group-item-secondary{% endif %}">
+        <span class="{% if task.done %}text-decoration-line-through{% endif %}">
+            {{ task.title }}
+            {% if task.due_date %}
+                <small class="text-muted ms-2">Due: {{ task.due_date.strftime('%b %d, %Y') }}</small>
+            {% endif %}
+        </span>
+        <div>
+            <a href="{{ url_for('edit_task', task_id=task.id) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+            <a href="{{ url_for('toggle_task', task_id=task.id) }}" class="btn btn-sm btn-outline-success">
+                {{ 'Undo' if task.done else 'Done' }}
+            </a>
+            <a href="{{ url_for('delete_task', task_id=task.id) }}" class="btn btn-sm btn-outline-danger">Delete</a>
+        </div>
+    </li>
+    {% else %}
+    <li class="list-group-item text-muted">No tasks yet — add one above.</li>
+    {% endfor %}
+</ul>
 {% endblock %}
